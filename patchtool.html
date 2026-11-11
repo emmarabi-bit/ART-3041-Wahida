@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Patch Tool</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Yellowtail&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#163d5d;--soft:#5f7b97;--bg:#f3f7fe;--line:#d9e4f7;--sky:#b3c9f5}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--navy);font:15px/1.45 Fredoka,"Segoe UI",system-ui,sans-serif}
+header{padding:28px 24px 6px;max-width:760px;margin:auto;text-align:center}
+header h1{margin:0;font:600 30px Fredoka,sans-serif}
+header p{margin:4px 0 0;color:var(--soft)}
+main{max-width:760px;margin:auto;padding:18px 24px 44px;display:grid;gap:20px}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:22px}
+.stage{display:flex;flex-direction:column;align-items:center;gap:18px}
+canvas#patch{width:min(100%,560px);aspect-ratio:1;filter:drop-shadow(0 10px 18px rgba(22,61,93,.22))}
+.minis{display:flex;align-items:flex-end;gap:16px;font-size:12px;color:var(--soft)}
+.minis div{text-align:center}.minis canvas{display:block;margin:0 auto 4px}
+.row{margin:0 0 14px}
+.row label,.row .lab{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+.row output{color:var(--soft)}
+input[type=text]{width:100%;padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;color:var(--navy);background:#fff}
+input[type=range]{width:100%;accent-color:var(--navy)}
+input:focus-visible,button:focus-visible{outline:3px solid var(--sky);outline-offset:1px}
+button{font:inherit;width:100%;padding:11px;border:1.5px solid var(--navy);border-radius:12px;background:var(--navy);color:#fff;cursor:pointer}
+button:hover{filter:brightness(1.12)}
+.types{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.types button{padding:6px 2px 4px;font-size:12px;background:#fff;color:var(--navy);border-color:var(--line);line-height:1.2}
+.types button.on{border-color:var(--navy);background:#eef3fd;box-shadow:0 0 0 2px var(--sky)}
+.types canvas{display:block;margin:0 auto 2px;width:100%;max-width:84px;height:auto}
+#status{font-size:12px;color:var(--soft);min-height:18px;margin-top:12px;text-align:center}
+</style>
+</head>
+<body>
+<header><h1>Patch Tool</h1><p>A rocket in an atom of loops. Pick a rocket, change the loops and sizes, then download.</p></header>
+<main>
+<section class="card stage">
+  <canvas id="patch" width="1050" height="1050" aria-label="Mission patch"></canvas>
+  <div class="minis" aria-label="Small size test">
+    <div><canvas id="m1" width="175" height="175"></canvas>0.6″</div>
+    <div><canvas id="m2" width="105" height="105"></canvas>0.35″</div>
+    <div><canvas id="m3" width="52" height="52"></canvas>0.18″</div>
+  </div>
+</section>
+<section class="card">
+  <div class="row"><div class="lab">Rocket type</div><div class="types" id="types"></div></div>
+  <div class="row"><label for="word">Name</label><input id="word" type="text" value="Baruch" maxlength="14"></div>
+  <div class="row"><label for="loops">Loops <output id="oL"></output></label><input id="loops" type="range" min="1" max="6" value="4"></div>
+  <div class="row"><label for="rsize">Rocket size <output id="oR"></output></label><input id="rsize" type="range" min="60" max="120" value="100"></div>
+  <div class="row"><label for="osize">Loop size <output id="oO"></output></label><input id="osize" type="range" min="60" max="100" value="100"></div>
+  <button id="png">Download PNG (300 dpi)</button>
+  <div id="status" aria-live="polite"></div>
+</section>
+</main>
+<script>
+const $=i=>document.getElementById(i),cv=$('patch'),H=455,TAU=Math.PI*2;
+// the only colors: navy, sky blue and white (taken from the drawing)
+const NAVY='#163d5d',SKY='#b3c9f5',WHITE='#ffffff';
+const SCRIPT='400 {px}px Yellowtail,"Segoe Script","Brush Script MT",cursive';
+
+// ---------- atom orbits (behind the rocket) ----------
+function orbits(g,n,sz){
+  g.save();g.scale(sz,sz);g.strokeStyle=SKY;g.lineWidth=9/sz;g.lineCap='round';g.lineJoin='round';
+  // [center x, center y, long radius, short radius, rotation]
+  [[0,-4,388,102,.05],          // wide, almost flat
+   [6,0,338,124,Math.PI/2+.03], // tall
+   [0,-6,402,118,.7],           // diagonal, top-left to bottom-right
+   [0,-6,396,124,-.7],          // diagonal, bottom-left to top-right
+   [0,-6,392,108,.33],          // extra, shallow diagonal
+   [0,-6,392,108,-.33]          // extra, shallow diagonal
+  ].slice(0,n).forEach(([x,y,a,b,r])=>{g.beginPath();g.ellipse(x,y,a,b,r,0,TAU);g.stroke()});
+  g.restore();
+}
+
+// ---------- rocket parts (drawn along +x, nose to the right) ----------
+// white bell with ribs and an open end
+function nozzle(g,ax,aw,ex,ew,rx){
+  g.beginPath();g.moveTo(ax,-aw);g.lineTo(ex,-ew);g.lineTo(ex,ew);g.lineTo(ax,aw);g.closePath();
+  g.fillStyle=WHITE;g.fill();
+  g.strokeStyle=NAVY;g.lineWidth=9;
+  g.beginPath();g.moveTo(ax,-aw);g.lineTo(ex,-ew);g.moveTo(ax,aw);g.lineTo(ex,ew);g.stroke();
+  g.lineWidth=7;
+  for(const f of[-.66,-.33,0,.33,.66]){g.beginPath();g.moveTo(ax-3,f*aw*.96);g.lineTo(ex+rx*Math.sqrt(1-f*f),f*ew);g.stroke()}
+  g.beginPath();g.ellipse(ex,0,rx,ew,0,0,TAU);g.fillStyle=WHITE;g.fill();g.lineWidth=9;g.stroke();
+}
+// a pair of fins, top and bottom: three points each
+function fins(g,pts){
+  g.fillStyle=NAVY;g.strokeStyle=NAVY;g.lineWidth=6;
+  for(const s of[1,-1]){g.save();g.scale(1,s);g.beginPath();g.moveTo(pts[0][0],pts[0][1]);g.lineTo(pts[1][0],pts[1][1]);g.lineTo(pts[2][0],pts[2][1]);g.closePath();g.fill();g.stroke();g.restore()}
+}
+function body(g,build){build(g);g.fillStyle=NAVY;g.fill();g.strokeStyle=NAVY;g.lineWidth=6;g.stroke()}
+function shine(g,x0,y0,cx,cy,x1,y1,dx,dy){
+  g.strokeStyle=WHITE;g.lineWidth=9;g.beginPath();g.moveTo(x0,y0);g.quadraticCurveTo(cx,cy,x1,y1);g.stroke();
+  g.fillStyle=WHITE;g.beginPath();g.ellipse(dx,dy,11,7,.4,0,TAU);g.fill();
+}
+function window_(g,x,y,r){
+  g.beginPath();g.arc(x,y,r,0,TAU);g.fillStyle=SKY;g.fill();g.strokeStyle=WHITE;g.lineWidth=9;g.stroke();
+  g.strokeStyle=WHITE;g.lineWidth=6;g.beginPath();g.arc(x,y,r*.55,Math.PI*1.1,Math.PI*1.5);g.stroke();
+}
+
+// ---------- rocket types ----------
+// shift centers the rocket; tx,ty = name position; tw = max name width; mp = biggest font size
+const ROCKETS=[
+ {n:'Capsule',shift:38,tx:-12,ty:4,tw:270,mp:130,draw(g){   // the drawing
+   nozzle(g,-215,48,-300,66,15);
+   body(g,g=>{g.beginPath();g.moveTo(215,-30);g.bezierCurveTo(238,-18,238,18,215,30);g.bezierCurveTo(150,100,40,150,-60,150);g.bezierCurveTo(-170,150,-235,95,-235,0);g.bezierCurveTo(-235,-95,-170,-140,-60,-140);g.bezierCurveTo(60,-130,160,-85,215,-30);g.closePath()});
+   shine(g,-70,-104,30,-122,125,-76,165,-48);
+ }},
+ {n:'Classic',shift:24,tx:-92,ty:0,tw:190,mp:110,draw(g){  // capsule body, pointed nose, fins, window
+   fins(g,[[-60,-110],[-195,-195],[-216,-80]]);
+   nozzle(g,-215,50,-285,60,14);
+   body(g,g=>{g.beginPath();g.moveTo(250,0);g.bezierCurveTo(205,-70,125,-112,40,-115);g.lineTo(-150,-115);g.bezierCurveTo(-200,-115,-215,-90,-215,-60);g.lineTo(-215,60);g.bezierCurveTo(-215,90,-200,115,-150,115);g.lineTo(40,115);g.bezierCurveTo(125,112,205,70,250,0);g.closePath()});
+   shine(g,-170,-92,-80,-100,-10,-94,25,-92);
+   window_(g,95,0,36);
+ }},
+ {n:'Pod',shift:34,tx:-5,ty:-4,tw:270,mp:120,draw(g){      // round egg-shaped pod with small fins
+   fins(g,[[-80,-120],[-200,-185],[-218,-80]]);
+   nozzle(g,-190,58,-255,76,14);
+   body(g,g=>{g.beginPath();g.moveTo(200,0);g.bezierCurveTo(200,-85,100,-135,0,-135);g.bezierCurveTo(-110,-135,-200,-85,-200,0);g.bezierCurveTo(-200,85,-110,135,0,135);g.bezierCurveTo(100,135,200,85,200,0);g.closePath()});
+   shine(g,-115,-88,-10,-126,100,-72,142,-50);
+ }},
+ {n:'Slim',shift:7,tx:-48,ty:0,tw:240,mp:100,draw(g){      // long and slim with big fins
+   fins(g,[[-100,-76],[-235,-195],[-250,-70]]);
+   nozzle(g,-225,34,-290,44,12);
+   body(g,g=>{g.beginPath();g.moveTo(290,0);g.bezierCurveTo(232,-45,150,-75,60,-80);g.lineTo(-190,-80);g.bezierCurveTo(-215,-80,-225,-60,-225,-40);g.lineTo(-225,40);g.bezierCurveTo(-225,60,-215,80,-190,80);g.lineTo(60,80);g.bezierCurveTo(150,75,232,45,290,0);g.closePath()});
+   shine(g,-175,-58,-70,-64,35,-58,70,-58);
+   window_(g,170,0,24);
+ }}
+];
+
+function rocket(g,word,size,kind){
+  const R=ROCKETS[kind];
+  g.save();
+  g.rotate(-.52);g.scale(1.08*size,1.08*size);g.translate(R.shift,0);
+  g.lineJoin='round';g.lineCap='round';
+  R.draw(g);
+  // name in script, with two swooshes underneath
+  g.fillStyle=WHITE;g.textAlign='center';g.textBaseline='middle';
+  let px=R.mp;const f=p=>g.font=SCRIPT.replace('{px}',p);f(px);
+  while(g.measureText(word).width>R.tw&&px>34){px-=2;f(px)}
+  const tw=g.measureText(word).width;
+  g.fillText(word,R.tx,R.ty);
+  const swoosh=(x0,x1,y)=>{const m=(x0+x1)/2;g.beginPath();g.moveTo(x0,y);g.quadraticCurveTo(m,y-10,x1,y-2);g.quadraticCurveTo(m,y-1,x0,y);g.closePath();g.fill()};
+  swoosh(R.tx,R.tx+tw*.43,R.ty+px*.5);swoosh(R.tx+tw*.07,R.tx+tw*.5,R.ty+px*.61);
+  g.restore();
+}
+
+// ---------- the patch ----------
+function render(g,S,o){
+  const k=S/1050,ring=r=>{g.beginPath();g.arc(0,0,r,0,TAU)};
+  g.save();g.clearRect(0,0,S,S);g.scale(k,k);g.translate(525,525);
+  g.save();ring(H);g.fillStyle=WHITE;g.fill();g.clip();
+  orbits(g,o.loops,o.orbit);rocket(g,o.word,o.rocket,o.kind);
+  g.restore();
+  // embroidered border
+  ring(H);g.strokeStyle=NAVY;g.lineWidth=34;g.stroke();
+  ring(H);g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=4.5;g.setLineDash([16,13]);g.stroke();g.setLineDash([]);
+  ring(H+17);g.strokeStyle=NAVY;g.lineWidth=5;g.stroke();
+  g.restore();
+}
+let kind=0;
+const opts=()=>({word:$('word').value.trim()||'Baruch',loops:+$('loops').value,rocket:$('rsize').value/100,orbit:$('osize').value/100,kind});
+function previews(word){
+  document.querySelectorAll('#types canvas').forEach((c,i)=>{const g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);g.save();g.translate(c.width/2,c.height/2);g.scale(c.width/700,c.width/700);rocket(g,word,1,i);g.restore()});
+  document.querySelectorAll('#types button').forEach((b,i)=>b.classList.toggle('on',i===kind));
+}
+function draw(){
+  $('oL').textContent=$('loops').value;$('oR').textContent=$('rsize').value+'%';$('oO').textContent=$('osize').value+'%';
+  const o=opts();render(cv.getContext('2d'),1050,o);previews(o.word);
+  for(const[id,s]of[['m1',175],['m2',105],['m3',52]]){const m=$(id).getContext('2d');m.clearRect(0,0,s,s);m.drawImage(cv,0,0,s,s)}
+}
+ROCKETS.forEach((r,i)=>{const b=document.createElement('button');b.type='button';b.innerHTML='<canvas width="168" height="168"></canvas>'+r.n;b.onclick=()=>{kind=i;draw();$('status').textContent=r.n+' rocket.'};$('types').appendChild(b)});
+['word','loops','rsize','osize'].forEach(id=>$(id).addEventListener('input',draw));
+$('png').onclick=()=>{
+  const c=document.createElement('canvas');c.width=c.height=1050;render(c.getContext('2d'),1050,opts());
+  c.toBlob(b=>{const a=document.createElement('a');a.download='mission-patch-3.5in-300dpi.png';a.href=URL.createObjectURL(b);a.click();
+    $('status').textContent='Saved 1050×1050 px = 3.5″ at 300 dpi, transparent corners.'})};
+draw();
+(document.fonts?document.fonts.load('40px Yellowtail').catch(()=>{}):Promise.resolve()).then(draw);
+</script>
+</body>
+</html>
