@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creative Director Pt. 2: Logo + Dynamic Hero · Wahida Irina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--green:#416f5b;--deep:#315c4d;--cream:#fbf7ec;--paper:#fffdf6;--line:#bfd4c4;--burgundy:#5a1424;--blush:#f3dcd5;--dur:6.5s;--serif:"Cormorant Garamond","Didot","Bodoni 72",Georgia,serif}
+*{box-sizing:border-box;margin:0}
+body{margin:0;background:var(--cream);color:var(--deep);font-family:Georgia,"Times New Roman",serif}
+.hero{position:relative;height:calc(100vh - 72px);height:calc(100svh - 72px);min-height:520px;overflow:hidden;background:var(--blush);font-family:var(--serif);color:var(--burgundy)}
+
+/* slides: the incoming one fades in over the outgoing one, so the screen never dips dark */
+.slide{position:absolute;inset:0;opacity:0;pointer-events:none;isolation:isolate;background:linear-gradient(115deg,#f7e6e0,#efd3ca)}
+.slide.on{opacity:1;pointer-events:auto;z-index:1;transition:opacity 1.4s ease}
+.slide.out{opacity:1}
+
+.photo{display:block;position:absolute;inset:0 auto 0 0;width:60%;overflow:hidden;
+  -webkit-mask-image:linear-gradient(to right,#000 76%,transparent);mask-image:linear-gradient(to right,#000 76%,transparent)}
+.planner-photo{width:55%;-webkit-mask-image:linear-gradient(to right,#000 92%,transparent);mask-image:linear-gradient(to right,#000 92%,transparent)}
+.wide-photo{width:62%;-webkit-mask-image:linear-gradient(to right,#000 86%,transparent);mask-image:linear-gradient(to right,#000 86%,transparent)}
+.photo img{width:100%;height:100%;object-fit:cover;object-position:50% 0%;display:block}
+.slide.on .photo img,.slide.out .photo img{animation:zoom 9s ease-out forwards;transform-origin:50% 20%}
+@keyframes zoom{from{transform:scale(1)}to{transform:scale(1.04)}}
+
+.panel{position:absolute;inset:0 0 0 56%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2rem clamp(1rem,3vw,3rem) 5rem}
+.logo{width:clamp(190px,23vw,340px);height:auto;display:block;opacity:0;transition:opacity 1s ease .3s}
+.slide.on .logo{opacity:1}
+.cap{margin-top:clamp(1rem,3vh,2rem);opacity:0;transform:translateY(8px);transition:opacity .9s ease,transform .9s ease}
+.slide.on .cap{opacity:1;transform:none;transition-delay:.8s}
+.cap h2{max-width:13em;margin:0 auto;text-wrap:balance;font-weight:400;font-style:italic;font-size:clamp(1.7rem,3vw,2.7rem);line-height:1.1}
+.cap p{margin-top:.5rem;font-size:clamp(1rem,1.3vw,1.2rem);letter-spacing:.02em;opacity:.9}
+.cap a{display:inline-block;margin-top:1rem;color:inherit;font-size:1.05rem;letter-spacing:.08em;text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:2px}
+.cap a:focus-visible,.dots button:focus-visible{outline:2px solid var(--burgundy);outline-offset:4px}
+
+.dots{position:absolute;z-index:3;left:56%;right:0;bottom:clamp(1.4rem,4vh,2.4rem);display:flex;gap:.6rem;padding:0 clamp(2rem,6vw,6rem)}
+.dots button{flex:1;height:22px;background:none;border:0;cursor:pointer;position:relative;padding:0}
+.dots button::before,.dots button::after{content:"";position:absolute;left:0;right:0;top:10px;height:2px;border-radius:2px}
+.dots button::before{background:rgba(90,20,36,.25)}
+.dots button::after{background:var(--burgundy);transform:scaleX(0);transform-origin:left}
+.dots button.on::after{animation:fill var(--dur) linear forwards}
+@keyframes fill{to{transform:scaleX(1)}}
+
+@media (max-width:700px){
+  .hero{height:164vw;min-height:0}
+  .slide{background:var(--blush)}
+  .photo,.wide-photo,.planner-photo{inset:0;width:100%;-webkit-mask-image:none;mask-image:none}
+  .cap h2{margin:0}
+  .photo img{object-position:50% 30%}
+  .panel{display:contents}
+  .logo{display:none}
+  .cap{position:absolute;z-index:2;left:1.3rem;bottom:4.5rem;max-width:80%;margin:0;text-align:left;color:var(--cream);text-shadow:0 1px 14px rgba(40,8,18,.5),0 0 3px rgba(40,8,18,.25)}
+  .cap::before{content:"";position:absolute;z-index:-1;inset:-2rem -2rem -1.5rem -3rem;background:radial-gradient(ellipse at 40% 55%,rgba(40,8,18,.34),rgba(40,8,18,0) 70%);pointer-events:none}
+  .dots{left:1.3rem;right:1.3rem;padding:0;bottom:1.4rem;filter:drop-shadow(0 1px 4px rgba(40,8,18,.45))}
+  .dots button::before{background:rgba(251,243,234,.45)}
+  .dots button::after{background:var(--cream)}
+  .cap a:focus-visible,.dots button:focus-visible{outline-color:var(--cream)}
+}
+@media (prefers-reduced-motion:reduce){
+  .slide.on,.cap,.logo{transition:none}
+  .slide.on .photo img,.slide.out .photo img,.dots button.on::after{animation:none}
+  .dots button.on::after{transform:scaleX(1)}
+  .cap,.logo{opacity:1;transform:none}
+}
+
+/* page chrome in the portfolio's own palette */
+.bar{height:72px;display:flex;align-items:center;gap:20px;padding:0 clamp(16px,4vw,48px);background:var(--paper);border-bottom:1px solid var(--line)}
+.bar a{color:var(--green);text-decoration:none;font-size:.95rem;white-space:nowrap}
+.bar a:hover,.bar a:focus-visible{text-decoration:underline}
+.bar h1{margin:0;flex:1;text-align:center;font-weight:500;font-size:clamp(1rem,2vw,1.55rem);color:var(--deep)}
+.bar .spacer{width:5.5rem}
+.page-section{max-width:1100px;margin:0 auto;padding:clamp(40px,7vw,84px) clamp(18px,5vw,48px)}
+.page-section h2{margin:0 0 12px;color:var(--green);font-weight:500;font-size:clamp(1.8rem,3.4vw,2.8rem)}
+.page-section p{margin:0 0 28px;max-width:44rem;line-height:1.65;color:#5f7a6b}
+.logo-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.logo-card{margin:0;display:grid;place-items:center;padding:clamp(24px,5vw,56px);border:1px solid var(--line);border-radius:26px}
+.logo-card img{width:min(100%,360px);height:auto;display:block}
+.logo-card.blush{background:linear-gradient(115deg,#f7e6e0,#efd3ca)}
+.logo-card.cream{background:#fbf3ea}
+.logo-card figcaption{margin-top:14px;font-size:.8rem;color:#7a8f81;text-align:center}
+.page-foot{text-align:center;padding:10px 0 60px;color:#7c9482;font-size:.85rem;letter-spacing:.08em}
+@media(max-width:700px){
+  .bar{height:64px}.bar .spacer{display:none}.bar h1{text-align:left;font-size:1rem}
+  .logo-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <a href="index.html#work">← My Work</a>
+  <h1>Creative Director Pt. 2: Logo + Dynamic Hero</h1>
+  <span class="spacer" aria-hidden="true"></span>
+</div>
+
+<section class="hero" id="hero" aria-roledescription="carousel" aria-label="L’Art d’Écrire campaign">
+
+  <div class="slide on">
+    <picture class="photo">
+      <source media="(max-width:700px)" srcset="hero-images/mobile-1.png">
+      <img src="hero-images/photo-1.png" alt="A woman in a cream coat carries a pink Dior diary along a Parisian street">
+    </picture>
+    <div class="panel">
+      <img class="logo" src="hero-images/logo.png" alt="Dior L’Art d’Écrire — Dream. Plan. Create.">
+      <div class="cap"><h2>Between the Lines</h2><p>Carry your story through the city.</p><a href="#collection">Discover the collection</a></div>
+    </div>
+  </div>
+
+  <div class="slide">
+    <picture class="photo">
+      <source media="(max-width:700px)" srcset="hero-images/mobile-2.png">
+      <img src="hero-images/photo-2.png" alt="A woman in burgundy velvet reads a Dior diary in an armchair" loading="lazy">
+    </picture>
+    <div class="panel">
+      <img class="logo" src="hero-images/logo.png" alt="" loading="lazy">
+      <div class="cap"><h2>A Quiet Hour</h2><p>A diary, an armchair, nowhere to be.</p><a href="#collection">Discover the collection</a></div>
+    </div>
+  </div>
+
+  <div class="slide">
+    <picture class="photo planner-photo">
+      <source media="(max-width:700px)" srcset="hero-images/mobile-3.png">
+      <img src="hero-images/photo-3.png" alt="A burgundy leather Dior planner with a gold pen, roses, a silk ribbon and a cup of coffee on pink marble" loading="lazy" style="object-position:50% 72%">
+    </picture>
+    <div class="panel">
+      <img class="logo" src="hero-images/logo.png" alt="" loading="lazy">
+      <div class="cap"><h2>Every Day, Beautifully</h2><p>Plan the day before it begins.</p><a href="#collection">Discover the collection</a></div>
+    </div>
+  </div>
+
+  <div class="slide">
+    <picture class="photo wide-photo">
+      <source media="(max-width:700px)" srcset="hero-images/mobile-4.png">
+      <img src="hero-images/photo-4.png" alt="A woman in burgundy sits on marble stairs beside a Dior L’Art d’Écrire desk calendar and pink and burgundy flowers" loading="lazy" style="object-position:100% 20%">
+    </picture>
+    <div class="panel">
+      <img class="logo" src="hero-images/logo.png" alt="" loading="lazy">
+      <div class="cap"><h2>Make Every Day Meaningful</h2><p>Calendars in large, medium and mini.</p><a href="#collection">Discover the collection</a></div>
+    </div>
+  </div>
+
+  <div class="dots" role="group" aria-label="Choose slide">
+    <button class="on" aria-label="Slide 1: Between the Lines"></button>
+    <button aria-label="Slide 2: A Quiet Hour"></button>
+    <button aria-label="Slide 3: Every Day, Beautifully"></button>
+    <button aria-label="Slide 4: Make Every Day Meaningful"></button>
+  </div>
+</section>
+
+
+<section class="page-section" id="about-hero">
+  <h2>Dynamic hero</h2>
+  <p>The brand page opens on a rotating campaign: four full-screen scenes for the L’Art d’Écrire diaries, planners and calendars that cross-fade on their own. Select a line under a scene to jump to it.</p>
+</section>
+
+<section class="page-section" id="logo" style="padding-top:0">
+  <h2>Logo</h2>
+  <p>The campaign logomark is a fountain-pen nib held in a gold oval and tied with a blush satin bow, set above the Dior name and the line “Dream. Plan. Create.” It appears beside every scene of the hero.</p>
+  <div class="logo-grid">
+    <figure class="logo-card blush"><img src="hero-images/logo.png" alt="L’Art d’Écrire logomark: a fountain-pen nib in a gold oval with a pink bow, above Dior and Dream. Plan. Create."><figcaption>On blush</figcaption></figure>
+    <figure class="logo-card cream"><img src="hero-images/logo.png" alt="" ><figcaption>On cream</figcaption></figure>
+  </div>
+</section>
+
+<p class="page-foot">Wahida Irina · ART 3041 · Fall 2026</p>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')),
+      dots=[].slice.call(document.querySelectorAll('.dots button')),
+      cur=0, timer=null,
+      still=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function go(n){
+    if(n===cur) return;
+    slides.forEach(function(s){s.classList.remove('out')});
+    slides[cur].classList.replace('on','out');
+    dots[cur].classList.remove('on');
+    cur=n;
+    slides[cur].classList.add('on');
+    dots[cur].classList.add('on');
+  }
+  function start(){
+    if(still) return;
+    clearInterval(timer);
+    timer=setInterval(function(){go((cur+1)%slides.length)},6500);
+  }
+  dots.forEach(function(b,i){b.addEventListener('click',function(){go(i);start();})});
+  start();
+})();
+</script>
+
+</body>
+</html>
